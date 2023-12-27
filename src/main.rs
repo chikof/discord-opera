@@ -3,6 +3,7 @@
 use reqwest;
 use std::io::{stdout, Write};
 use tokio::time::{sleep, Duration};
+use uuid::Uuid;
 
 const URL: &str = "https://api.discord.gx.games/v1/direct-fulfillment";
 
@@ -16,8 +17,8 @@ async fn main() {
 	}
 
 	loop {
-		// Sleep for 2000 milliseconds
-		sleep(Duration::from_millis(2000)).await;
+		// Sleep for 1 second
+		sleep(Duration::from_secs(1)).await;
 
 		if let Ok(token) = make_request().await {
 			if let Err(e) = std::fs::OpenOptions::new()
@@ -39,8 +40,10 @@ async fn main() {
 
 async fn make_request() -> Result<String, reqwest::Error> {
 	let client = reqwest::Client::new();
-	let body =
-		r#"{"partnerUserId":"e534e4d94bb2450fb6eda2027fdec128965a237fcdbc49c62ac12bc9c799afd1"}"#;
+	// Generate a random UUID every time
+	let parent_user_id_str = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
+
+	let body = format!("{{\"partnerUserId\":\"{}\"}}", parent_user_id_str);
 
 	let response = client
 		.post(URL)
