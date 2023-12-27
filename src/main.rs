@@ -1,7 +1,7 @@
-#![feature(fs_try_exists, file_create_new)]
+#![feature(file_create_new)]
 
 use reqwest;
-use std::io::{stdout, Write};
+use std::io::{self, stdout, Write};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 
@@ -11,10 +11,6 @@ const URL: &str = "https://api.discord.gx.games/v1/direct-fulfillment";
 async fn main() {
 	let counter = std::sync::atomic::AtomicUsize::new(0);
 	let mut stdout = stdout();
-
-	if std::fs::try_exists("tokens.txt").is_err() {
-		std::fs::File::create_new("tokens.txt").unwrap();
-	}
 
 	loop {
 		// Sleep for 1 second
@@ -26,7 +22,9 @@ async fn main() {
 				.open("tokens.txt")
 				.and_then(|mut file| file.write_all(format!("{token}\n").as_bytes()))
 			{
-				eprintln!("Error writing to file: {}", e);
+				if e.kind() == io::ErrorKind::NotFound {
+					std::fs::File::create_new("tokens.txt").unwrap();
+				}
 			}
 
 			let count = counter.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
